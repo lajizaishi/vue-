@@ -25,12 +25,9 @@ function Observer(data_instance){
             configurable: true,
             get() {
                 console.log(`访问了属性：${key} -> 值：${value}`)
-                console.log('Dependency.temp',Dependency.temp)
+                // console.log('Dependency.temp',Dependency.temp)
                 // 订阅这加入以来实例的数组
                 Dependency.temp && depenfency.addSub(Dependency.temp)
-                if (Dependency.temp){
-                    console.log(Dependency.temp)
-                }
                 return value;
             },
             set(newValue) {
@@ -75,19 +72,29 @@ function Compile(element, vm){
             attr.forEach(i=>{
                 if (i.nodeName === 'v-model'){
                     const value = i.nodeValue.split(".").reduce((total, current) => total[current], vm.$data);
-                    console.log('---arr',value)
-                    // const value = i.nodeValue.split('.').reduce(
-                    //     (total,current) => total[current], vm.$data
-                    // );
-                    console.log(value)
+                    node.value = value
+                    // 创建订阅者
+                    new Watcher(vm, i.nodeValue,newValue => {
+                        node.value = newValue
+                    })
+                    node.addEventListener('input',e => {
+                        // ['more','like']
+                        const arr1 = i.nodeValue.split('.')
+                        // ['more']
+                        const arr2 = arr1.slice(0,arr1.length-1)
+                        const final = arr2.reduce((total,current)=>total[current],vm.$data)
+                        console.log('final-----------',final[arr1[arr1.length - 1]])
+                        final[arr1[arr1.length - 1]] = e.target.value
+                    })
                 }
             })
         }
         node.childNodes.forEach(child => fragment_compole(child))
     }
+    // 这里做更新dome操作 对应 document.querySelector(element)
     vm.$el.appendChild(fragment)
 }
-// 依赖 - 收集和通知订阅者
+// // 依赖 - 收集和通知订阅者
 class Dependency {
     constructor() {
         // 存放订阅者信息
